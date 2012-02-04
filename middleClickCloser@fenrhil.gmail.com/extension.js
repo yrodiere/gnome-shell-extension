@@ -16,13 +16,20 @@ const Workspace = imports.ui.workspace;
  * 	It's quite ugly to rely on the proxy's signature...
  */
 function _addProxyToFunction(parent, name, proxy) {
-    let subject = parent[name];
+    parent[name+'_bak'] = parent[name];
     parent[name] = function(actor, event) {
 		return proxy.call(this, subject, actor, event);
     }
 }
 
-function main() {
+function _removeProxyFromFunction(parent, name) {
+	parent[name] = parent[name+'_bak'];
+}
+
+function init() {
+}
+
+function enable() {
 	_addProxyToFunction(Workspace.WindowClone.prototype, '_onButtonRelease',
 			function(subject, actor, event) {
 				if (event.get_button() == 2) {
@@ -34,5 +41,9 @@ function main() {
 				}
 			}
 			);
+}
+
+function disable() {
+	_removeProxyFromFunction(Workspace.WindowClone.prototype, '_onButtonRelease');
 }
 
