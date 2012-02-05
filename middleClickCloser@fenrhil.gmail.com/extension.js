@@ -7,6 +7,7 @@
  * http://sam.zoy.org/wtfpl/COPYING for more details.
  */
 const Workspace = imports.ui.workspace;
+original_subject = undefined;
 
 /**
  * Adapted from "injectToFunction()", found in
@@ -16,34 +17,35 @@ const Workspace = imports.ui.workspace;
  * 	It's quite ugly to rely on the proxy's signature...
  */
 function _addProxyToFunction(parent, name, proxy) {
-    parent[name+'_bak'] = parent[name];
-    parent[name] = function(actor, event) {
-		return proxy.call(this, subject, actor, event);
+    original_subject = parent[name];
+    parent[name] = function(action, actor) {
+		return proxy.call(this, original_subject, action, actor);
     }
 }
 
 function _removeProxyFromFunction(parent, name) {
-	parent[name] = parent[name+'_bak'];
+	parent[name] = original_subject;
 }
 
 function init() {
 }
 
 function enable() {
-	_addProxyToFunction(Workspace.WindowClone.prototype, '_onButtonRelease',
-			function(subject, actor, event) {
-				if (event.get_button() == 2) {
+	_addProxyToFunction(Workspace.WindowClone.prototype, '_onClicked',
+			function(subject, action, actor) {
+				//global.log("Button: " + action.get_button());
+				if (action.get_button() == 2) {
 					// Middle-click
 					this.metaWindow.delete(global.get_current_time());
 				} else {
 					// Any other button
-					return subject.call(this, actor, event);
+					return subject.call(this, action, actor);
 				}
 			}
-			);
+		);
 }
 
 function disable() {
-	_removeProxyFromFunction(Workspace.WindowClone.prototype, '_onButtonRelease');
+	_removeProxyFromFunction(Workspace.WindowClone.prototype, '_onClicked');
 }
 
